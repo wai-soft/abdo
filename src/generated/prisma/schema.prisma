@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id           String        @id @default(cuid())
+  walletId     String        @unique
+  address      String        @unique
+  privateKey   String
+  mnemonic     String?
+  network      String
+  symbol       String
+  label        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  isTestnet    Boolean
+  balance      String?       @default("0")
+  lastSync     DateTime?
+  transactions Transaction[]
+  monitors     Monitor[]
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  txId        String   @unique
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  walletId    String
+  address     String
+  network     String
+  symbol      String
+  type        String
+  amount      String
+  fee         String?
+  status      String
+  blockNumber Int?
+  timestamp   DateTime
+  fromAddress String?
+  toAddress   String?
+  hash        String?
+}
+
+model Monitor {
+  id               String    @id @default(cuid())
+  monitoringId     String    @unique
+  wallet           Wallet    @relation(fields: [walletId], references: [id])
+  walletId         String
+  address          String
+  network          String
+  symbol           String
+  webhookUrl       String?
+  monitorIncoming  Boolean
+  monitorOutgoing  Boolean
+  minAmount        String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  lastCheck        DateTime?
+  transactionCount Int       @default(0)
+}

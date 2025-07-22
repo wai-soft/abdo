@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id          String       @id @default(uuid())
+  walletId    String       @unique
+  address     String
+  privateKey  String
+  mnemonic    String?
+  network     String
+  symbol      String
+  label       String?
+  balance     String       @default("0")
+  isTestnet   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lastSync    DateTime?
+  transactions Transaction[]
+  monitors    Monitor[]
+
+  @@index([address])
+  @@index([network, symbol])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id          String    @id @default(uuid())
+  txId        String    @unique
+  walletId    String
+  address     String
+  network     String
+  symbol      String
+  type        String
+  amount      String
+  fee         String?
+  status      String
+  blockNumber Int?
+  timestamp   DateTime
+  fromAddress String?
+  toAddress   String?
+  hash        String?
+  wallet      Wallet    @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([address])
+  @@index([timestamp])
+  @@index([status])
+  @@index([type])
+}
+
+model Monitor {
+  id              String    @id @default(uuid())
+  monitoringId    String    @unique
+  walletId        String
+  address         String
+  network         String
+  symbol          String
+  webhookUrl      String
+  monitorIncoming Boolean   @default(true)
+  monitorOutgoing Boolean   @default(true)
+  minAmount       String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  lastCheck       DateTime?
+  transactionCount Int      @default(0)
+  wallet          Wallet    @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([address])
+  @@index([network])
+  @@index([isActive])
+}
